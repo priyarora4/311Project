@@ -3,7 +3,6 @@ from utils import *
 import matplotlib.pyplot as plt
 
 
-
 def knn_impute_by_user(matrix, valid_data, k):
     """ Fill in the missing values using k-Nearest Neighbors based on
     student similarity. Return the accuracy on valid_data.
@@ -35,18 +34,11 @@ def knn_impute_by_item(matrix, valid_data, k):
     :param k: int
     :return: float
     """
-    #####################################################################
-    # TODO:                                                             #
-    # Implement the function as described in the docstring.             #
-    #####################################################################
     nbrs = KNNImputer(n_neighbors=k)
     # We use NaN-Euclidean distance measure.
     mat = nbrs.fit_transform(matrix.T)
     acc = sparse_matrix_evaluate(valid_data, mat.T)
     print("Validation Accuracy: {}".format(acc))
-    #####################################################################
-    #                       END OF YOUR CODE                            #
-    #####################################################################
     return acc
 
 
@@ -60,37 +52,24 @@ def main():
     print("Shape of sparse matrix:")
     print(sparse_matrix.shape)
 
-    #####################################################################
-    # TODO:                                                             #
-    # Compute the validation accuracy for each k. Then pick k* with     #
-    # the best performance and report the test accuracy with the        #
-    # chosen k*.                                                        #
-    #####################################################################
     all_valid_acc = []
     for k in range(1, 27, 5):
-        valid_acc = knn_impute_by_item(sparse_matrix, val_data, k)
+        valid_acc = knn_impute_by_user(sparse_matrix, val_data, k)
         all_valid_acc.append(valid_acc)
 
     plt.plot(range(1, 27, 5), all_valid_acc)
     plt.xlabel("k")
     plt.ylabel("accuracy")
 
-    plt.show()
+    plt.savefig('../plots/A1a_by_user.png')
 
-
-    print('Validation accuracies: '+ str(all_valid_acc))
+    print('Validation accuracies: ' + str(all_valid_acc))
     best_k_index = all_valid_acc.index(max(all_valid_acc))
     best_k = range(1, 27, 5)[best_k_index]
     print("best k = " + str(best_k))
 
-    test_acc = knn_impute_by_item(sparse_matrix, test_data, best_k)
+    test_acc = knn_impute_by_user(sparse_matrix, test_data, best_k)
     print("test acc = " + str(test_acc))
-
-
-
-    #####################################################################
-    #                       END OF YOUR CODE                            #
-    #####################################################################
 
 
 if __name__ == "__main__":
