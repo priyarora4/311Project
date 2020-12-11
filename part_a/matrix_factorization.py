@@ -124,7 +124,21 @@ def main():
     # (SVD) Try out at least 5 different k and select the best k        #
     # using the validation set.                                         #
     #####################################################################
-    pass
+    # accuracies = []
+    # test_k_range = range(1, 500)
+    # for k in test_k_range:
+    #     reconstruction = svd_reconstruct(train_matrix, k)
+    #     acc = sparse_matrix_evaluate(val_data, reconstruction)
+    #     print("k={} | acc={}".format(k, acc))
+    #     accuracies.append(acc)
+    # max_acc = max(accuracies)
+    # max_k = accuracies.index(max_acc)
+    # print("max k = {} | max val acc = {}".format(max_k, max_acc))
+    max_k = 8
+    reconstruction = svd_reconstruct(train_matrix, max_k)
+    max_k_test_acc = sparse_matrix_evaluate(test_data, reconstruction)
+    print("max k = {} | max test acc = {}".format(max_k, max_k_test_acc))
+
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
