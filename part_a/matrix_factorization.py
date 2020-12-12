@@ -123,9 +123,10 @@ def als(train_data, val_data, k, lr, num_iteration):
         u, z = update_u_z(train_data, lr, u, z)
         # accuracy_valids.append(sparse_matrix_evaluate(val_data, mat))
         # accuracy_train.append(sparse_matrix_evaluate(train_data, mat))
-        if i%10000 == 0:
-            error_valids.append(squared_error_loss(val_data, u, z))
-            error_train.append(squared_error_loss(train_data, u, z))
+
+        # if i%10000 == 0:
+        #     error_valids.append(squared_error_loss(val_data, u, z))
+        #     error_train.append(squared_error_loss(train_data, u, z))
 
     mat = u @ z.T
     #####################################################################
@@ -171,28 +172,28 @@ def main():
     #####################################################################
     num_iterations = 500000
     lr = 0.01
-    for k in range(2, 103, 20):
-        mat, accuracy_train, accuracy_valids, error_train, error_valids = \
-            als(train_data, val_data, k, lr=lr, num_iteration=num_iterations)
+    # for k in range(2, 103, 20):
+    mat, accuracy_train, accuracy_valids, error_train, error_valids = \
+        als(train_data, val_data, k=82, lr=lr, num_iteration=num_iterations)
 
-        accuracy_train = sparse_matrix_evaluate(train_data, mat)
-        accuracy_valid = sparse_matrix_evaluate(val_data, mat)
-        print("K = {}".format(k))
-        print("Training accuracy: {}".format(accuracy_train))
-        print("Validation accuracy: {}".format(accuracy_valid))
-        print('\n\n')
+    accuracy_train = sparse_matrix_evaluate(train_data, mat)
+    accuracy_valid = sparse_matrix_evaluate(val_data, mat)
+    print("K = {}".format(82))
+    print("Training accuracy: {}".format(accuracy_train))
+    print("Validation accuracy: {}".format(accuracy_valid))
+    print('\n\n')
 
-        plt.plot(range(0, num_iterations, 10000), error_train)
-        plt.plot(range(0, num_iterations, 10000), error_valids)
-
-        plt.ylabel('Error')
-        plt.xlabel('Iteration')
-
-        plt.legend(['Training error', 'Validation error'])
-
-        plt.title('K = {}, lr = {}, num_iterations = {}'.format(k, lr, num_iterations))
-
-        plt.show()
+        # plt.plot(range(0, num_iterations, 10000), error_train)
+        # plt.plot(range(0, num_iterations, 10000), error_valids)
+        #
+        # plt.ylabel('Error')
+        # plt.xlabel('Iteration')
+        #
+        # plt.legend(['Training error', 'Validation error'])
+        #
+        # plt.title('K = {}, lr = {}, num_iterations = {}'.format(k, lr, num_iterations))
+        #
+        # plt.show()
 
 
 

@@ -214,23 +214,25 @@ def main():
     best_lr = 0.01
     best_iterations = 20
 
+    theta, beta, val_acc_lst, neg_lld_list_train, neg_lld_list_valid = irt(
+        train_data, val_data, best_lr, best_iterations)
 
 
 
-    # print("Validation accuracy for lambda=0.01 iterations=500 :  {}".format(val_acc_lst))
-    #
-    #
-    # plt.plot(range(1, iterations+1), neg_lld_list_train)
-    # plt.plot(range(1, iterations+1), neg_lld_list_valid)
+    print("Validation accuracy for lambda=0.01 iterations=20 :  {}".format(val_acc_lst[-1]))
+
+
+    # plt.plot(range(1, best_iterations+1), neg_lld_list_train)
+    # plt.plot(range(1, best_iterations+1), neg_lld_list_valid)
     # plt.xlabel("iteration")
     # plt.ylabel("NLLK")
     #
     # plt.legend(['Train', 'Validation'])
     #
     # plt.show()
-    #
-    # score = evaluate(test_data, theta, beta)
-    # print("test accuracy {}".format(score))
+
+    score = evaluate(test_data, theta, beta)
+    print("test accuracy {}".format(score))
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
