@@ -32,7 +32,7 @@ def bootstrap_data(data, size):
 
 def run_irt(train_data, val_data):
     best_lr = 0.01
-    best_iterations = 20
+    best_iterations = 13
 
     size = len(train_data['user_id'])
     train_data_bootstrap = bootstrap_data(train_data, size)
@@ -84,7 +84,7 @@ def main():
     mat_irt = run_irt(train_data, val_data)
     mat_knn = run_knn(train_data, val_data, k=11)
     mat_fact = run_fact(train_data, val_data, k=82)
-    mat_fact2 = run_fact(train_data, val_data, k=160)
+    mat_fact2 = run_fact(train_data, val_data, k=388)
 
     irt_accuracy_train = sparse_matrix_evaluate(train_data, mat_irt)
     fact2_accuracy_train = sparse_matrix_evaluate(train_data, mat_fact2)
@@ -107,7 +107,7 @@ def main():
     # print('\n')
 
 
-    ensemble = (mat_irt + mat_knn + mat_fact) / 3
+    ensemble = (mat_irt + mat_fact2 + mat_knn) / 3
 
     train_accuracy = sparse_matrix_evaluate(train_data, ensemble)
     valid_accuracy = sparse_matrix_evaluate(val_data, ensemble)

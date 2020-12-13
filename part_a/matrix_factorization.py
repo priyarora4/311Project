@@ -156,10 +156,11 @@ def main():
     # max_acc = max(accuracies)
     # max_k = accuracies.index(max_acc)
     # print("max k = {} | max val acc = {}".format(max_k, max_acc))
-    max_k = 8
-    reconstruction = svd_reconstruct(train_matrix, max_k)
-    max_k_test_acc = sparse_matrix_evaluate(test_data, reconstruction)
-    print("max k = {} | max test acc = {}".format(max_k, max_k_test_acc))
+    # max_k = 8
+    # reconstruction = svd_reconstruct(train_matrix, max_k)
+    # max_k_test_acc = sparse_matrix_evaluate(test_data, reconstruction)
+    # max_k_val_acc = sparse_matrix_evaluate(val_data, reconstruction)
+    # print("max k = {} | max test acc = {}".format(max_k, max_k_test_acc))
 
     #####################################################################
     #                       END OF YOUR CODE                            #
@@ -172,28 +173,42 @@ def main():
     #####################################################################
     num_iterations = 500000
     lr = 0.01
-    # for k in range(2, 103, 20):
+    best_k = 388
+    # for k in range(70, 303, 20):
+    #     mat, accuracy_train, accuracy_valids, error_train, error_valids = \
+    #         als(train_data, val_data, k=388, lr=lr, num_iteration=num_iterations)
+    #
+    #     accuracy_train = sparse_matrix_evaluate(train_data, mat)
+    #     accuracy_valid = sparse_matrix_evaluate(val_data, mat)
+    #     print("K = {}".format(k))
+    #     print("Training accuracy: {}".format(accuracy_train))
+    #     print("Validation accuracy: {}".format(accuracy_valid))
+    #     print('\n\n')
+
     mat, accuracy_train, accuracy_valids, error_train, error_valids = \
-        als(train_data, val_data, k=82, lr=lr, num_iteration=num_iterations)
+                 als(train_data, val_data, k=388, lr=lr, num_iteration=num_iterations)
 
-    accuracy_train = sparse_matrix_evaluate(train_data, mat)
-    accuracy_valid = sparse_matrix_evaluate(val_data, mat)
-    print("K = {}".format(82))
-    print("Training accuracy: {}".format(accuracy_train))
-    print("Validation accuracy: {}".format(accuracy_valid))
-    print('\n\n')
+    # num_samples_val = len(val_data['user_id'])
+    # num_samples_train = len(train_data['user_id'])
+    #
+    # avg_error_train = np.asarray(error_train) / num_samples_train
+    #
+    # avg_error_val = np.asarray(error_valids) / num_samples_val
+    #
+    # plt.plot(range(0, num_iterations, 10000), avg_error_train)
+    # plt.plot(range(0, num_iterations, 10000), avg_error_val)
+    #
+    # plt.ylabel('Squared Error')
+    # plt.xlabel('Iteration')
+    #
+    # plt.legend(['Training error', 'Validation error'])
+    #
+    # plt.title('Average Squared Error vs Iteration \n K = {}, lr = {}, num_iterations = {}'.format(best_k, lr, num_iterations))
+    #
+    # plt.show()
 
-        # plt.plot(range(0, num_iterations, 10000), error_train)
-        # plt.plot(range(0, num_iterations, 10000), error_valids)
-        #
-        # plt.ylabel('Error')
-        # plt.xlabel('Iteration')
-        #
-        # plt.legend(['Training error', 'Validation error'])
-        #
-        # plt.title('K = {}, lr = {}, num_iterations = {}'.format(k, lr, num_iterations))
-        #
-        # plt.show()
+    print("Test Accuracy: {}".format(sparse_matrix_evaluate(test_data, mat)))
+    print("Valid Accuracy: {}".format(sparse_matrix_evaluate(val_data, mat)))
 
 
 
