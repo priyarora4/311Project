@@ -71,6 +71,21 @@ def run_fact(train_data, val_data, k):
 
     return mat
 
+def load_Q(num_questions):
+    num_categories = 388
+    path = "../data/question_meta.csv"
+    Q = np.zeros((num_questions, num_categories))
+
+    with open(path, "r") as csv_file:
+        reader = csv.reader(csv_file)
+        for row in reader:
+            question_id = row[0]
+            subjects = row[1]
+
+            for subject in subjects:
+                Q[question_id][subject] = 1
+    return Q
+
 def main():
 
     #get data
@@ -80,6 +95,8 @@ def main():
     val_data = load_valid_csv("../data")
     test_data = load_public_test_csv("../data")
 
+
+    num_questions = len(set(train_data['question_id']))
 
     mat_irt = run_irt(train_data, val_data)
     mat_knn = run_knn(train_data, val_data, k=11)

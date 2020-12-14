@@ -2,6 +2,7 @@ from utils import *
 
 import numpy as np
 import matplotlib.pyplot as plt
+import ast
 
 
 
@@ -11,7 +12,7 @@ def sigmoid(x):
     return np.exp(x) / (1 + np.exp(x))
 
 
-def neg_log_likelihood(data, theta, beta):
+def neg_log_likelihood(data, U, beta, a, Q):
     """ Compute the negative log-likelihood.
 
     You may optionally replace the function arguments to receive a matrix.
@@ -30,12 +31,15 @@ def neg_log_likelihood(data, theta, beta):
     log_lklihood = 0
     num_samples = len(data['user_id'])
 
-    for i in range(num_samples):
-        beta_j = beta[data['question_id'][i]]
-        theta_i = theta[data['user_id'][i]]
-        is_correct = data['is_correct'][i]
-        log_lklihood += is_correct*(theta_i - beta_j) - np.log(1 + np.exp(theta_i - beta_j))
+    for n in range(num_samples):
+        c_ij = data['is_correct'][n]
+        beta_j = beta[data['question_id'][n]]
+        u_i = U[data['user_id'][n]].reshape((388, 1))
+        a_j = a[data['question_id'][n]]
+        q_j = Q[data['question_id'][n]]
 
+        log_lklihood += c_ij*a_j*(u_i.T @ q_j - beta_j) - \
+            np.log(1 + np.exp(a_j*(u_i.T @ q_j - beta_j)))
 
 
     #####################################################################
@@ -44,15 +48,9 @@ def neg_log_likelihood(data, theta, beta):
     return -log_lklihood
 
 
-def update_theta_beta(data, lr, theta, beta):
-    """ Update theta and beta using gradient descent.
+def update_U_beta_a(data, lr, U, beta, a, Q):
+    """ Update U and beta and a using gradient descent.
 
-    You are using alternating gradient descent. Your update should look:
-    for i in iterations ...
-        theta <- new_theta
-        beta <- new_beta
-
-    You may optionally replace the function arguments to receive a matrix.
 
     :param data: A dictionary {user_id: list, question_id: list,
     is_correct: list}
@@ -66,50 +64,63 @@ def update_theta_beta(data, lr, theta, beta):
     # Implement the function as described in the docstring.             #
     #####################################################################
     num_samples = len(data['user_id'])
-    theta_sums = np.zeros(theta.shape)
+    u_sums = np.zeros(U.shape)
     beta_sums = np.zeros(beta.shape)
+    a_sums = np.zeros(a.shape)
 
 
-    for i in range(num_samples):
+    for n in range(num_samples):
+        c_ij = data['is_correct'][n]
+        beta_j = beta[data['question_id'][n]]
+        u_i = U[data['user_id'][n]].reshape((388, 1))
+        a_j = a[data['question_id'][n]]
+        q_j = Q[data['question_id'][n]].reshape((388, 1))
+        i = data['user_id'][n]
+        j = data['question_id'][n]
 
+        sub_gradient = c_ij*a_j*q_j - sigmoid(a_j*(u_i.T@q_j - beta_j)) * (a_j*q_j)
 
-        user_id = data['user_id'][i]
-        question_id = data['question_id'][i]
-        beta_j = beta[question_id]
-        theta_i = theta[user_id]
-        is_correct = data['is_correct'][i]
+        u_sums[i] += sub_gradient.reshape((388,))
 
-        # updating theta
+    U += lr*u_sums
 
-        sub_gradient_theta = is_correct - ((np.exp(theta_i)) / (np.exp(beta_j) + np.exp(theta_i)))
-        theta_sums[user_id] += sub_gradient_theta
+    for n in range(num_samples):
+        c_ij = data['is_correct'][n]
+        beta_j = beta[data['question_id'][n]]
+        u_i = U[data['user_id'][n]].reshape((388, 1))
+        a_j = a[data['question_id'][n]]
+        q_j = Q[data['question_id'][n]].reshape((388, 1))
+        i = data['user_id'][n]
+        j = data['question_id'][n]
 
-    theta = theta + lr*theta_sums
+        sub_gradient = c_ij*(u_i.T@q_j - beta_j) - sigmoid(a_j*(u_i.T@q_j - beta_j)) * (u_i.T@q_j - beta_j)
 
-    for i in range(num_samples):
+        a_sums[j] += sub_gradient.reshape((1,))
 
+    a += lr*a_sums
 
-        user_id = data['user_id'][i]
-        question_id = data['question_id'][i]
-        beta_j = beta[question_id]
-        theta_i = theta[user_id]
-        is_correct = data['is_correct'][i]
+    for n in range(num_samples):
+        c_ij = data['is_correct'][n]
+        beta_j = beta[data['question_id'][n]]
+        u_i = U[data['user_id'][n]].reshape((388, 1))
+        a_j = a[data['question_id'][n]]
+        q_j = Q[data['question_id'][n]].reshape((388, 1))
+        i = data['user_id'][n]
+        j = data['question_id'][n]
 
-        #updating beta
+        sub_gradient = -c_ij*a_j + sigmoid(a_j*(u_i.T@q_j - beta_j)) * (a_j)
 
-        sub_gradient_beta = ((np.exp(theta_i)) / (np.exp(beta_j) + np.exp(theta_i))) - is_correct
-        beta_sums[question_id] += sub_gradient_beta
+        beta_sums[j] += sub_gradient.reshape((1,))
 
-    beta = beta + lr*beta_sums
-
+    beta += lr*beta_sums
 
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
-    return theta, beta
+    return U, beta, a
 
 
-def irt(data, val_data, lr, iterations):
+def irt(data, val_data, lr, iterations, Q):
     """ Train IRT model.
 
     You may optionally replace the function arguments to receive a matrix.
@@ -127,30 +138,32 @@ def irt(data, val_data, lr, iterations):
     num_questions = len(set(data['question_id']))
     # theta = np.random.rand(num_users, 1)
     # beta = np.random.rand(num_questions, 1)
-    theta = np.zeros((num_users, 1))
+    U = np.zeros((num_users, 388))
     beta = np.zeros((num_questions, 1))
+    a = np.ones((num_questions, 1))
 
 
     val_acc_lst = []
     neg_lld_list_train = []
     neg_lld_list_valid = []
     for i in range(iterations):
-        # neg_lld = neg_log_likelihood(data, theta=theta, beta=beta)
+        #neg_lld = neg_log_likelihood(data, U=U, beta=beta, a=a, Q=Q)
         # neg_lld_list_train.append(neg_lld)
         #
         # neg_lld_valid = neg_log_likelihood(data=val_data, theta=theta, beta=beta)
         # neg_lld_list_valid.append(neg_lld_valid)
 
-        # score = evaluate(data=val_data, theta=theta, beta=beta)
-        # val_acc_lst.append(score)
+        score = evaluate(data=val_data, U=U, beta=beta, a=a, Q=Q)
+        val_acc_lst.append(score)
         #print("NLLK: {} \t Score: {}".format(neg_lld, score))
-        theta, beta = update_theta_beta(data, lr, theta, beta)
+        U, beta, a = update_U_beta_a(data, lr, U=U, beta=beta, a=a, Q=Q)
+        print(i)
 
     # TODO: You may change the return values to achieve what you want.
-    return theta, beta, val_acc_lst, neg_lld_list_train, neg_lld_list_valid
+    return U, beta, a, val_acc_lst, neg_lld_list_train, neg_lld_list_valid
 
 
-def evaluate(data, theta, beta):
+def evaluate(data, U, beta, a, Q):
     """ Evaluate the model given data and return the accuracy.
     :param data: A dictionary {user_id: list, question_id: list,
     is_correct: list}
@@ -162,12 +175,32 @@ def evaluate(data, theta, beta):
     pred = []
     for i, q in enumerate(data["question_id"]):
         u = data["user_id"][i]
-        x = (theta[u] - beta[q]).sum()
+        u_u = U[u].reshape((388,1))
+        q_q = Q[q].reshape((388,1))
+        x = a[q]*(u_u.T @ q_q - beta[q])
         p_a = sigmoid(x)
-        pred.append(p_a >= 0.5)
+        pred.append(p_a[0][0] >= 0.5)
     return np.sum((data["is_correct"] == np.array(pred))) \
            / len(data["is_correct"])
 
+def load_Q(num_questions):
+    num_categories = 388
+    path = "../data/question_meta.csv"
+    Q = np.zeros((num_questions, num_categories))
+
+    with open(path, "r") as csv_file:
+        reader = csv.reader(csv_file)
+        for row in reader:
+            try:
+                question_id = int(row[0])
+                subjects = row[1]
+                subjects = ast.literal_eval(subjects)
+                for subject in subjects:
+                    Q[question_id][int(subject)] = 1
+            except ValueError:
+                pass
+
+    return Q
 
 def main():
     train_data = load_train_csv("../data")
@@ -176,6 +209,10 @@ def main():
     val_data = load_valid_csv("../data")
     test_data = load_public_test_csv("../data")
 
+    num_questions = len(set(train_data['question_id']))
+    Q = load_Q(num_questions)
+
+
     #####################################################################
     # TODO:                                                             #
     # Tune learning rate and number of iterations. With the implemented #
@@ -183,49 +220,53 @@ def main():
     #####################################################################
     # lr = 0.01
     # iterations = 100
-    # learning_rates = [0.001, 0.005, 0.01, 0.05]
+    # learning_rates = [0.001, 0.005, 0.01]
     # for lr in learning_rates:
     #     if lr == 0.01 or lr == 0.05:
     #         iterations = 50
     #     best_accuracies_per_lr = []
     #
-    #     theta, beta, val_acc_lst, neg_lld_list_train, neg_lld_list_valid = irt(train_data, val_data, lr, iterations)
+    #     U, beta, a, val_acc_lst, neg_lld_list_train, neg_lld_list_valid = irt(train_data, val_data, lr, iterations, Q)
     #
     #     max_accuracy = max(val_acc_lst)
     #
     #     print("Current Learning Rate: {}".format(lr))
     #     print("Best Validation Accuracy: {}".format(max_accuracy))
     #     print("At iteration: {}".format(val_acc_lst.index(max_accuracy)))
+    #     print("Training Accuracy {}".format(evaluate(train_data, U, beta, a, Q)))
     #     print('\n\n')
 
-        # # plt.plot(range(1, iterations + 1), neg_lld_list_train)
+        # plt.plot(range(1, iterations + 1), neg_lld_list_train)
         # plt.plot(range(1, iterations + 1), neg_lld_list_valid)
         # plt.xlabel("iteration")
         # plt.ylabel("NLLK")
-        #
-        # # plt.legend(['Train', 'Validation'])
-        #
+
+        # plt.legend(['Train', 'Validation'])
+
         # plt.show()
 
         # best_accuracies_per_lr.append(max_accuracy)
 
 
-    best_lr = 0.01
-    best_iterations = 13
+    best_lr = 0.005
+    best_iterations = 16
     #
     #
     #
-    theta, beta, val_acc_lst, neg_lld_list_train, neg_lld_list_valid = irt(
-        train_data, val_data, best_lr, best_iterations)
+    U, beta, a, val_acc_lst, neg_lld_list_train, neg_lld_list_valid = irt(
+        train_data, val_data, best_lr, best_iterations, Q)
 
-    # score = evaluate(test_data, theta, beta)
-    # score_valid = evaluate(val_data, theta, beta)
+    score = evaluate(test_data, U, beta, a, Q)
+    score_valid = evaluate(val_data, U, beta, a, Q)
+    score_train = evaluate(train_data, U, beta, a, Q)
+
     # #
     # #
-    # print("Test accuracy for lambda={} iterations={} :  {}".format(best_lr, best_iterations, score))
-    #
-    # print("Validation accuracy for lambda={} iterations={} :  {}".format(best_lr, best_iterations, score_valid))
+    print("Test accuracy for lambda={} iterations={} :  {}".format(best_lr, best_iterations, score))
 
+    print("Validation accuracy for lambda={} iterations={} :  {}".format(best_lr, best_iterations, score_valid))
+
+    print("train accuracy for lambda={} iterations={} :  {}".format(best_lr, best_iterations, score_train))
 
     # num_samples_val = len(val_data['user_id'])
     # num_samples_train = len(train_data['user_id'])
@@ -256,27 +297,27 @@ def main():
     #####################################################################
     #TODO REPORT TEST ACCURACIES
 
-    theta, beta, val_acc_lst, neg_lld_list_train, neg_lld_list_valid = irt(
-        train_data, val_data, best_lr, best_iterations)
-
-    five_questions = []
-    index = 0
-    while len(five_questions) != 5:
-        if train_data['question_id'][index] not in five_questions:
-            five_questions.append(train_data['question_id'][index])
-        index+=1
-
-
-    for question_id in five_questions:
-        probs = []
-        for i in range(len(theta)):
-            probs.append(sigmoid(theta[i] - beta[question_id]))
-
-        plt.plot(theta, probs, 'r.')
-        plt.xlabel('Theta')
-        plt.ylabel('Probability correct')
-        plt.title("IRT Probability Correct vs Theta, Question Id: {}".format(question_id))
-        plt.show()
+    # theta, beta, val_acc_lst, neg_lld_list_train, neg_lld_list_valid = irt(
+    #     train_data, val_data, best_lr, best_iterations)
+    #
+    # five_questions = []
+    # index = 0
+    # while len(five_questions) != 5:
+    #     if train_data['question_id'][index] not in five_questions:
+    #         five_questions.append(train_data['question_id'][index])
+    #     index+=1
+    #
+    #
+    # for question_id in five_questions:
+    #     probs = []
+    #     for i in range(len(theta)):
+    #         probs.append(sigmoid(theta[i] - beta[question_id]))
+    #
+    #     plt.plot(theta, probs, 'r.')
+    #     plt.xlabel('Theta')
+    #     plt.ylabel('Probability correct')
+    #     plt.title("IRT Probability Correct vs Theta, Question Id: {}".format(question_id))
+    #     plt.show()
 
     #####################################################################
     #                       END OF YOUR CODE                            #
