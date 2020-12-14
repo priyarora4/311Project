@@ -240,16 +240,16 @@ def main():
     #
     #
     #
-    theta, beta, a, val_acc_lst, neg_lld_list_train, neg_lld_list_valid = irt(
-        train_data, val_data, best_lr, best_iterations)
-
-    score = evaluate(test_data, theta, beta, a)
-    score_valid = evaluate(val_data, theta, beta, a)
+    # theta, beta, a, val_acc_lst, neg_lld_list_train, neg_lld_list_valid = irt(
+    #     train_data, val_data, best_lr, best_iterations)
     #
+    # score = evaluate(test_data, theta, beta, a)
+    # score_valid = evaluate(val_data, theta, beta, a)
+    # #
+    # #
+    # print("Test accuracy for lambda={} iterations={} :  {}".format(best_lr, best_iterations, score))
     #
-    print("Test accuracy for lambda={} iterations={} :  {}".format(best_lr, best_iterations, score))
-
-    print("Validation accuracy for lambda={} iterations={} :  {}".format(best_lr, best_iterations, score_valid))
+    # print("Validation accuracy for lambda={} iterations={} :  {}".format(best_lr, best_iterations, score_valid))
 
 
     # num_samples_val = len(val_data['user_id'])
@@ -281,7 +281,7 @@ def main():
     #####################################################################
     #TODO REPORT TEST ACCURACIES
 
-    # theta, beta, val_acc_lst, neg_lld_list_train, neg_lld_list_valid = irt(
+    # theta, beta, a, val_acc_lst, neg_lld_list_train, neg_lld_list_valid = irt(
     #     train_data, val_data, best_lr, best_iterations)
     #
     # five_questions = []
@@ -292,18 +292,24 @@ def main():
     #     index+=1
     #
     #
-    # for question_id in five_questions:
-    #     probs = []
+    # for question_id in five_questions[-1:]:
+    #     probs1 = []
+    #     probs2 = []
+    #     probs3 = []
     #     for i in range(len(theta)):
-    #         probs.append(sigmoid(theta[i] - beta[question_id]))
+    #         probs1.append(sigmoid(0.5*(theta[i] - beta[question_id])))
+    #         probs2.append(sigmoid(1*(theta[i] - beta[question_id])))
+    #         probs3.append(sigmoid(2*(theta[i] - beta[question_id])))
     #
-    #     plt.plot(theta, probs, 'r.')
+    #     plt.plot(theta, probs1, '.')
+    #     plt.plot(theta, probs2, '.')
+    #     plt.plot(theta, probs3, '.')
     #     plt.xlabel('Theta')
-    #     plt.ylabel('Probability correct')
+    #     plt.ylabel('Probability Correct')
+    #     plt.legend(['a = 0.5', 'a = 1', 'a = 2'])
     #     plt.title("IRT Probability Correct vs Theta, Question Id: {}".format(question_id))
     #     plt.show()
-
-    #####################################################################
+    # #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
 
