@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import ast
 
+g = 0.25
 
 
 def sigmoid(x):
@@ -38,8 +39,8 @@ def neg_log_likelihood(data, U, beta, a, Q):
         a_j = a[data['question_id'][n]]
         q_j = Q[data['question_id'][n]]
 
-        log_lklihood += c_ij*a_j*(u_i.T @ q_j - beta_j) - \
-            np.log(1 + np.exp(a_j*(u_i.T @ q_j - beta_j)))
+        log_lklihood += c_ij * np.log(np.exp(a_j*(u_i.T@q_j - beta_j)) + g) - \
+            np.log(np.exp(a_j*(u_i.T@q_j - beta_j)) + 1) - (c_ij-1)*np.log(1-g)
 
 
     #####################################################################
@@ -78,7 +79,10 @@ def update_U_beta_a(data, lr, U, beta, a, Q):
         i = data['user_id'][n]
         j = data['question_id'][n]
 
-        sub_gradient = c_ij*a_j*q_j - sigmoid(a_j*(u_i.T@q_j - beta_j)) * (a_j*q_j)
+        e_aj_qu = np.exp(a_j*u_i.T@q_j)
+        e_aj_bj = np.exp(a_j*beta_j)
+
+        sub_gradient = (a_j*q_j*e_aj_qu) * (c_ij/(g*e_aj_bj + e_aj_qu) - 1/(e_aj_bj + e_aj_qu))
 
         u_sums[i] += sub_gradient.reshape((388,))
 
@@ -93,7 +97,10 @@ def update_U_beta_a(data, lr, U, beta, a, Q):
         i = data['user_id'][n]
         j = data['question_id'][n]
 
-        sub_gradient = c_ij*(u_i.T@q_j - beta_j) - sigmoid(a_j*(u_i.T@q_j - beta_j)) * (u_i.T@q_j - beta_j)
+        e_aj_qu = np.exp(a_j * u_i.T @ q_j)
+        e_aj_bj = np.exp(a_j * beta_j)
+
+        sub_gradient = e_aj_qu*(u_i.T@q_j - beta_j) * (c_ij/(g*e_aj_bj + e_aj_qu) - 1/(e_aj_bj + e_aj_qu))
 
         a_sums[j] += sub_gradient.reshape((1,))
 
@@ -108,7 +115,10 @@ def update_U_beta_a(data, lr, U, beta, a, Q):
         i = data['user_id'][n]
         j = data['question_id'][n]
 
-        sub_gradient = -c_ij*a_j + sigmoid(a_j*(u_i.T@q_j - beta_j)) * (a_j)
+        e_aj_qu = np.exp(a_j * u_i.T @ q_j)
+        e_aj_bj = np.exp(a_j * beta_j)
+
+        sub_gradient = ((a_j*c_ij*g*e_aj_bj) / (g*e_aj_bj + e_aj_qu)) - ((a_j*e_aj_bj)/(e_aj_bj + e_aj_qu)) + a_j*(1-c_ij)
 
         beta_sums[j] += sub_gradient.reshape((1,))
 
@@ -173,6 +183,7 @@ def evaluate(data, U, beta, a, Q):
     :return: float
     """
     pred = []
+    wrongs = []
     for i, q in enumerate(data["question_id"]):
         u = data["user_id"][i]
         u_u = U[u].reshape((388,1))
@@ -180,6 +191,9 @@ def evaluate(data, U, beta, a, Q):
         x = a[q]*(u_u.T @ q_q - beta[q])
         p_a = sigmoid(x)
         pred.append(p_a[0][0] >= 0.5)
+        if data["is_correct"][i] != (p_a[0][0] >= 0.5):
+            wrongs.append((data["is_correct"][i], p_a[0][0]))
+
     return np.sum((data["is_correct"] == np.array(pred))) \
            / len(data["is_correct"])
 
@@ -222,23 +236,23 @@ def main():
     # Tune learning rate and number of iterations. With the implemented #
     # code, report the validation and test accuracy.                    #
     #####################################################################
-    # lr = 0.01
-    # iterations = 100
-    # learning_rates = [0.001, 0.005, 0.01]
-    # for lr in learning_rates:
-    #     if lr == 0.01 or lr == 0.05:
-    #         iterations = 50
-    #     best_accuracies_per_lr = []
-    #
-    #     U, beta, a, val_acc_lst, neg_lld_list_train, neg_lld_list_valid = irt(train_data, val_data, lr, iterations, Q)
-    #
-    #     max_accuracy = max(val_acc_lst)
-    #
-    #     print("Current Learning Rate: {}".format(lr))
-    #     print("Best Validation Accuracy: {}".format(max_accuracy))
-    #     print("At iteration: {}".format(val_acc_lst.index(max_accuracy)))
-    #     print("Training Accuracy {}".format(evaluate(train_data, U, beta, a, Q)))
-    #     print('\n\n')
+    lr = 0.01
+    iterations = 100
+    learning_rates = [0.001, 0.005, 0.01, 0.05]
+    for lr in learning_rates:
+        if lr == 0.01 or lr == 0.05:
+            iterations = 50
+        best_accuracies_per_lr = []
+
+        U, beta, a, val_acc_lst, neg_lld_list_train, neg_lld_list_valid = irt(train_data, val_data, lr, iterations, Q)
+
+        max_accuracy = max(val_acc_lst)
+
+        print("Current Learning Rate: {}".format(lr))
+        print("Best Validation Accuracy: {}".format(max_accuracy))
+        print("At iteration: {}".format(val_acc_lst.index(max_accuracy)))
+        print("Training Accuracy {}".format(evaluate(train_data, U, beta, a, Q)))
+        print('\n\n')
 
         # plt.plot(range(1, iterations + 1), neg_lld_list_train)
         # plt.plot(range(1, iterations + 1), neg_lld_list_valid)
@@ -253,19 +267,30 @@ def main():
 
 
     best_lr = 0.01
-    best_iterations = 26
+    best_iterations = 16
     #
     #
     #
     U, beta, a, val_acc_lst, neg_lld_list_train, neg_lld_list_valid = irt(
         train_data, val_data, best_lr, best_iterations, Q)
 
-    score = evaluate(test_data, U, beta, a, Q)
-    score_valid = evaluate(val_data, U, beta, a, Q)
-    score_train = evaluate(train_data, U, beta, a, Q)
+    score, wrongs_test = evaluate(test_data, U, beta, a, Q)
+    score_valid, wrongs_val = evaluate(val_data, U, beta, a, Q)
+    score_train, wrongs_train = evaluate(train_data, U, beta, a, Q)
 
+    wrong1count = 0
+    wrong0count = 0
+    for i in range(len(wrongs_val)):
+        if wrongs_val[i][0] == 1:
+            wrong1count += 1
+
+        elif wrongs_val[i][0] == 0:
+            wrong0count += 1
+    print("Prediction wrong Correct is 1: {}".format(wrong1count))
+    print("Prediction wrong Correct is 0: {}".format(wrong0count))
     # #
     # #
+
     print("Test accuracy for lambda={} iterations={} :  {}".format(best_lr, best_iterations, score))
 
     print("Validation accuracy for lambda={} iterations={} :  {}".format(best_lr, best_iterations, score_valid))
