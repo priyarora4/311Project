@@ -212,6 +212,10 @@ def main():
     num_questions = len(set(train_data['question_id']))
     Q = load_Q(num_questions)
 
+    # train_data['question_id'] += val_data['question_id']
+    # train_data['user_id'] += val_data['user_id']
+    # train_data['is_correct'] += val_data['is_correct']
+
 
     #####################################################################
     # TODO:                                                             #
@@ -248,8 +252,8 @@ def main():
         # best_accuracies_per_lr.append(max_accuracy)
 
 
-    best_lr = 0.005
-    best_iterations = 16
+    best_lr = 0.01
+    best_iterations = 26
     #
     #
     #
