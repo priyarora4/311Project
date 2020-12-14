@@ -3,7 +3,7 @@ from utils import *
 import numpy as np
 import matplotlib.pyplot as plt
 
-
+g=0.25
 
 def sigmoid(x):
     """ Apply sigmoid function.
@@ -34,9 +34,14 @@ def neg_log_likelihood(data, theta, beta, a):
         beta_j = beta[data['question_id'][i]]
         question_id = data['question_id'][i]
         theta_i = theta[data['user_id'][i]]
-        is_correct = data['is_correct'][i]
-        log_lklihood += is_correct*a[question_id]*(theta_i - beta_j) - \
-                        np.log(1 + np.exp(a[question_id]*(theta_i - beta_j)))
+        c_ij = data['is_correct'][i]
+        a_j = a[question_id]
+
+        e_ab = np.exp(a_j*beta_j)
+        e_atheta = np.exp(a_j*theta_i)
+        e_atheta_b = np.exp(a_j*(theta_i-beta_j))
+
+        log_lklihood += c_ij*np.log(((g-1)*e_ab)/(e_ab + e_atheta) + 1) - (c_ij-1)*np.log(-(g-1)/(e_atheta_b + 1))
 
 
     #####################################################################
@@ -79,13 +84,15 @@ def update_theta_beta(data, lr, theta, beta, a):
         question_id = data['question_id'][i]
         beta_j = beta[question_id]
         theta_i = theta[user_id]
-        is_correct = data['is_correct'][i]
-        aj = a[question_id]
+        c_ij = data['is_correct'][i]
+        a_j = a[question_id]
+
+        e_atheta_b = np.exp(a_j*(theta_i-beta_j))
 
 
         # updating theta
 
-        sub_gradient_theta = (is_correct - ((np.exp(aj*theta_i)) / (np.exp(aj*beta_j) + np.exp(aj*theta_i))))*aj
+        sub_gradient_theta = -(a_j*c_ij*g)/(e_atheta_b + g) + (a_j)/(e_atheta_b + 1) + a_j*(c_ij-1)
         theta_sums[user_id] += sub_gradient_theta
 
     theta = theta + lr*theta_sums
@@ -97,13 +104,14 @@ def update_theta_beta(data, lr, theta, beta, a):
         question_id = data['question_id'][i]
         beta_j = beta[question_id]
         theta_i = theta[user_id]
-        is_correct = data['is_correct'][i]
-        aj = a[question_id]
+        c_ij = data['is_correct'][i]
+        a_j = a[question_id]
 
+        e_atheta_b = np.exp(a_j*(theta_i-beta_j))
 
         #updating beta
 
-        sub_gradient_beta = aj*(((np.exp(aj*theta_i)) / (np.exp(aj*beta_j) + np.exp(aj*theta_i))) - is_correct)
+        sub_gradient_beta = (a_j*c_ij*g)/(e_atheta_b + g) - (a_j)/(e_atheta_b + 1) + a_j*(1-c_ij)
         beta_sums[question_id] += sub_gradient_beta
 
     beta = beta + lr*beta_sums
@@ -113,11 +121,13 @@ def update_theta_beta(data, lr, theta, beta, a):
         question_id = data['question_id'][i]
         beta_j = beta[question_id]
         theta_i = theta[user_id]
-        is_correct = data['is_correct'][i]
-        aj = a[question_id]
+        c_ij = data['is_correct'][i]
+        a_j = a[question_id]
 
-        sub_gradient_a = is_correct*(theta_i - beta_j) - \
-                         ((theta_i-beta_j)*np.exp(aj*(theta_i-beta_j))) / (1 + np.exp(aj*(theta_i-beta_j)))
+        e_ab = np.exp(a_j * beta_j)
+        e_atheta = np.exp(a_j * theta_i)
+
+        sub_gradient_a = e_atheta*(theta_i - beta_j)*((c_ij)/(g*e_ab + e_atheta) - (1)/(e_ab + e_atheta))
 
         a_sums[question_id] += sub_gradient_a
 
@@ -150,7 +160,7 @@ def irt(data, val_data, lr, iterations):
     # beta = np.random.rand(num_questions, 1)
     theta = np.zeros((num_users, 1))
     beta = np.zeros((num_questions, 1))
-    a = np.random.rand(num_questions, 1)
+    a = np.ones((num_questions, 1))
 
 
     val_acc_lst = []
@@ -163,8 +173,8 @@ def irt(data, val_data, lr, iterations):
         # neg_lld_valid = neg_log_likelihood(data=val_data, theta=theta, beta=beta)
         # neg_lld_list_valid.append(neg_lld_valid)
 
-        # score = evaluate(data=val_data, theta=theta, beta=beta, a=a)
-        # val_acc_lst.append(score)
+        score = evaluate(data=val_data, theta=theta, beta=beta, a=a)
+        val_acc_lst.append(score)
         # print("NLLK: {} \t Score: {}".format(neg_lld, score))
         theta, beta, a = update_theta_beta(data, lr, theta, beta, a)
         print(i)
@@ -210,29 +220,29 @@ def main():
     #####################################################################
     lr = 0.01
     iterations = 100
-    learning_rates = [0.001, 0.005, 0.01, 0.05]
-    # for lr in learning_rates:
-    #     best_accuracies_per_lr = []
-    #
-    #     theta, beta, a, val_acc_lst, neg_lld_list_train, neg_lld_list_valid = irt(train_data, val_data, lr, iterations)
-    #
-    #     max_accuracy = max(val_acc_lst)
-    #
-    #     print("Current Learning Rate: {}".format(lr))
-    #     print("Best Validation Accuracy: {}".format(max_accuracy))
-    #     print("At iteration: {}".format(val_acc_lst.index(max_accuracy)))
-    #     print('\n\n')
-    #
-    #     # plt.plot(range(1, iterations + 1), neg_lld_list_train)
-    #     # plt.plot(range(1, iterations + 1), neg_lld_list_valid)
-    #     # plt.xlabel("iteration")
-    #     # plt.ylabel("NLLK")
-    #
-    #     # plt.legend(['Train', 'Validation'])
-    #
-    #     # plt.show()
-    #
-    #     best_accuracies_per_lr.append(max_accuracy)
+    learning_rates = [0.01, 0.05]
+    for lr in learning_rates:
+        best_accuracies_per_lr = []
+
+        theta, beta, a, val_acc_lst, neg_lld_list_train, neg_lld_list_valid = irt(train_data, val_data, lr, iterations)
+
+        max_accuracy = max(val_acc_lst)
+
+        print("Current Learning Rate: {}".format(lr))
+        print("Best Validation Accuracy: {}".format(max_accuracy))
+        print("At iteration: {}".format(val_acc_lst.index(max_accuracy)))
+        print('\n\n')
+
+        # plt.plot(range(1, iterations + 1), neg_lld_list_train)
+        # plt.plot(range(1, iterations + 1), neg_lld_list_valid)
+        # plt.xlabel("iteration")
+        # plt.ylabel("NLLK")
+
+        # plt.legend(['Train', 'Validation'])
+
+        # plt.show()
+
+        best_accuracies_per_lr.append(max_accuracy)
 
 
     best_lr = 0.01
