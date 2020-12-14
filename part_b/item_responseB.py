@@ -150,7 +150,7 @@ def irt(data, val_data, lr, iterations):
     # beta = np.random.rand(num_questions, 1)
     theta = np.zeros((num_users, 1))
     beta = np.zeros((num_questions, 1))
-    a = np.random.rand(num_questions, 1)
+    a = np.ones((num_questions, 1))
 
 
     val_acc_lst = []
