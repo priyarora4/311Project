@@ -22,10 +22,6 @@ def neg_log_likelihood(data, theta, beta):
     :param beta: Vector
     :return: float
     """
-    #####################################################################
-    # TODO:                                                             #
-    # Implement the function as described in the docstring.             #
-    #####################################################################
     log_lklihood = 0
     num_samples = len(data['user_id'])
 
@@ -36,9 +32,6 @@ def neg_log_likelihood(data, theta, beta):
         log_lklihood += is_correct * (theta_i - beta_j) - np.log(
             1 + np.exp(theta_i - beta_j))
 
-    #####################################################################
-    #                       END OF YOUR CODE                            #
-    #####################################################################
     return -log_lklihood
 
 
@@ -59,9 +52,6 @@ def update_theta_beta(data, lr, theta, beta):
     :param beta: Vector
     :return: tuple of vectors
     """
-    #####################################################################
-    # Implement the function as described in the docstring.             #
-    #####################################################################
     num_samples = len(data['user_id'])
     theta_sums = np.zeros(theta.shape)
     beta_sums = np.zeros(beta.shape)
@@ -77,7 +67,7 @@ def update_theta_beta(data, lr, theta, beta):
         # updating theta
 
         sub_gradient_theta = is_correct - (
-                    (np.exp(theta_i)) / (np.exp(beta_j) + np.exp(theta_i)))
+                (np.exp(theta_i)) / (np.exp(beta_j) + np.exp(theta_i)))
         theta_sums[user_id] += sub_gradient_theta
 
     theta = theta + lr * theta_sums
@@ -93,14 +83,11 @@ def update_theta_beta(data, lr, theta, beta):
         # updating beta
 
         sub_gradient_beta = ((np.exp(theta_i)) / (
-                    np.exp(beta_j) + np.exp(theta_i))) - is_correct
+                np.exp(beta_j) + np.exp(theta_i))) - is_correct
         beta_sums[question_id] += sub_gradient_beta
 
     beta = beta + lr * beta_sums
 
-    #####################################################################
-    #                       END OF YOUR CODE                            #
-    #####################################################################
     return theta, beta
 
 
@@ -117,7 +104,7 @@ def irt(data, val_data, lr, iterations):
     :param iterations: int
     :return: (theta, beta, val_acc_lst)
     """
-    # TODO: Initialize theta and beta.
+    # Initialize theta and beta.
     num_users = len(set(data['user_id']))
     num_questions = len(set(data['question_id']))
     theta = np.zeros((num_users, 1))
@@ -139,7 +126,6 @@ def irt(data, val_data, lr, iterations):
 
         theta, beta = update_theta_beta(data, lr, theta, beta)
 
-    # TODO: You may change the return values to achieve what you want.
     return theta, beta, val_acc_lst, neg_lld_list_train, neg_lld_list_valid
 
 
@@ -170,14 +156,9 @@ def main():
     test_data = load_public_test_csv("../data")
 
     #####################################################################
-    # TODO:                                                             #
     # Tune learning rate and number of iterations. With the implemented #
     # code, report the validation and test accuracy.                    #
     #####################################################################
-
-    """Tuning learning rate and number of iterations 
-    """
-
     # lr = 0.01
     # iterations = 100
     # learning_rates = [0.001, 0.005, 0.01, 0.05]
@@ -195,8 +176,9 @@ def main():
     #     print("At iteration: {}".format(val_acc_lst.index(max_accuracy)))
     #     print('\n\n')
 
-    """Plotting negative log likelihood vs iteration
-    """
+    #####################################################################
+    # Plotting negative log likelihood vs iteration #
+    #####################################################################
 
     # # plt.plot(range(1, iterations + 1), neg_lld_list_train)
     # plt.plot(range(1, iterations + 1), neg_lld_list_valid)
@@ -206,9 +188,10 @@ def main():
     # # plt.legend(['Train', 'Validation'])
     #
     # plt.show()
-    """Printing test and validation accuracy with best hyperparams
-    """
 
+    #####################################################################
+    # Printing test and validation accuracy with best hyperparams #
+    #####################################################################
     best_lr = 0.01
     best_iterations = 13
     theta, beta, val_acc_lst, neg_lld_list_train, neg_lld_list_valid = irt(
@@ -217,12 +200,18 @@ def main():
     score = evaluate(test_data, theta, beta)
     score_valid = evaluate(val_data, theta, beta)
 
-    print("Test accuracy for lambda={} iterations={} :  {}".format(best_lr, best_iterations, score))
+    print("Test accuracy for lambda={} iterations={} :  {}".format(best_lr,
+                                                                   best_iterations,
+                                                                   score))
 
-    print("Validation accuracy for lambda={} iterations={} :  {}".format(best_lr, best_iterations, score_valid))
+    print(
+        "Validation accuracy for lambda={} iterations={} :  {}".format(best_lr,
+                                                                       best_iterations,
+                                                                       score_valid))
 
-    """Plotting average log likelihood
-    """
+    #####################################################################
+    # Plotting average log likelihood #
+    #####################################################################
     # num_samples_val = len(val_data['user_id'])
     # num_samples_train = len(train_data['user_id'])
     #
@@ -242,15 +231,10 @@ def main():
 
     # score = evaluate(test_data, theta, beta)
     # print("test accuracy {}".format(score))
-    #####################################################################
-    #                       END OF YOUR CODE                            #
-    #####################################################################
 
     #####################################################################
     # Implement part (c)                                                #
     #####################################################################
-    """Plotting theta vs probability
-    """
     # theta, beta, val_acc_lst, neg_lld_list_train, neg_lld_list_valid = irt(
     #     train_data, val_data, best_lr, best_iterations)
     #
@@ -272,10 +256,6 @@ def main():
     #     plt.title("IRT Probability Correct vs Theta, Question Id: {}".format(
     #         question_id))
     #     plt.show()
-
-    #####################################################################
-    #                       END OF YOUR CODE                            #
-    #####################################################################
 
 
 if __name__ == "__main__":
