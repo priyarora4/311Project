@@ -108,7 +108,6 @@ def als(train_data, val_data, k, lr, num_iteration):
                           size=(len(set(train_data["question_id"])), k))
 
     #####################################################################
-    # TODO:                                                             #
     # Implement the function as described in the docstring.             #
     #####################################################################
     accuracy_valids = []
@@ -158,12 +157,8 @@ def main():
     # max_k_val_acc = sparse_matrix_evaluate(val_data, reconstruction)
     # print("max k = {} | max test acc = {}".format(max_k, max_k_test_acc))
 
-    #####################################################################
-    #                       END OF YOUR CODE                            #
-    #####################################################################
 
     #####################################################################
-    # TODO:                                                             #
     # (ALS) Try out at least 5 different k and select the best k        #
     # using the validation set.                                         #
     #####################################################################
@@ -184,7 +179,9 @@ def main():
     mat, accuracy_train, accuracy_valids, error_train, error_valids = \
                  als(train_data, val_data, k=best_k, lr=lr, num_iteration=num_iterations)
 
-    """Plotting average squared error"""
+    #####################################################################
+    # PLOTTING AVERAGE SQUARED ERROR                                    #
+    #####################################################################
     # num_samples_val = len(val_data['user_id'])
     # num_samples_train = len(train_data['user_id'])
     #
@@ -204,7 +201,10 @@ def main():
     #
     # plt.show()
 
-    """Plotting squared error"""
+    #####################################################################
+    # PLOTTING SQUARED ERROR                                            #
+    #####################################################################
+
     # num_samples_val = len(val_data['user_id'])
     # num_samples_train = len(train_data['user_id'])
     #
@@ -216,17 +216,12 @@ def main():
     #
     # plt.legend(['Training error', 'Validation error'])
     #
-    # plt.title('Average Squared Error vs Iteration \n K = {}, lr = {}, num_iterations = {}'.format(best_k, lr, num_iterations))
+    # plt.title('Squared Error vs Iteration \n K = {}, lr = {}, num_iterations = {}'.format(best_k, lr, num_iterations))
     #
     # plt.show()
 
     print("Test Accuracy: {}".format(sparse_matrix_evaluate(test_data, mat)))
     print("Valid Accuracy: {}".format(sparse_matrix_evaluate(val_data, mat)))
-
-
-    #####################################################################
-    #                       END OF YOUR CODE                            #
-    #####################################################################
 
 
 if __name__ == "__main__":
