@@ -69,7 +69,7 @@ def main():
     print("best k = " + str(best_k))
 
     test_acc = knn_impute_by_user(sparse_matrix, test_data, best_k)
-    print("test acc = " + str(test_acc))
+    print("Test acc = " + str(test_acc))
 
 
 if __name__ == "__main__":

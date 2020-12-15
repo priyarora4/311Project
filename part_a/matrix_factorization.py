@@ -71,7 +71,6 @@ def update_u_z(train_data, lr, u, z):
     :return: (u, z)
     """
     #####################################################################
-    # TODO:                                                             #
     # Implement the function as described in the docstring.             #
     #####################################################################
     # Randomly select a pair (user_id, question_id).
@@ -82,10 +81,7 @@ def update_u_z(train_data, lr, u, z):
     n = train_data["user_id"][i]
     q = train_data["question_id"][i]
 
-   # d_dun = -(c - u[n].T @ z[q])*z[q]
     u[n] = u[n] + lr*(c - u[n].T @ z[q])*z[q]
-
-    #d_dzq = -(c - u[n].T @ z[q])*u[n]
 
     z[q] = z[q] + lr*(c - u[n].T @ z[q])*u[n]
 
@@ -121,6 +117,8 @@ def als(train_data, val_data, k, lr, num_iteration):
     accuracy_train = []
     for i in range(num_iteration):
         u, z = update_u_z(train_data, lr, u, z)
+        #FOR PLOTTING REASONS
+        # mat = u @ z.T
         # accuracy_valids.append(sparse_matrix_evaluate(val_data, mat))
         # accuracy_train.append(sparse_matrix_evaluate(train_data, mat))
 
@@ -134,7 +132,6 @@ def als(train_data, val_data, k, lr, num_iteration):
     #####################################################################
     return mat, accuracy_train, accuracy_valids, error_train, error_valids
 
-
 def main():
     train_matrix = load_train_sparse("../data").toarray()
     train_data = load_train_csv("../data")
@@ -142,7 +139,6 @@ def main():
     test_data = load_public_test_csv("../data")
 
     #####################################################################
-    # TODO:                                                             #
     # (SVD) Try out at least 5 different k and select the best k        #
     # using the validation set.                                         #
     #####################################################################
@@ -174,9 +170,9 @@ def main():
     num_iterations = 500000
     lr = 0.01
     best_k = 388
-    # for k in range(70, 303, 20):
+    # for k in [2, 10, 50, 100, 150, 250, 388]:
     #     mat, accuracy_train, accuracy_valids, error_train, error_valids = \
-    #         als(train_data, val_data, k=388, lr=lr, num_iteration=num_iterations)
+    #         als(train_data, val_data, k=k, lr=lr, num_iteration=num_iterations)
     #
     #     accuracy_train = sparse_matrix_evaluate(train_data, mat)
     #     accuracy_valid = sparse_matrix_evaluate(val_data, mat)
@@ -186,8 +182,9 @@ def main():
     #     print('\n\n')
 
     mat, accuracy_train, accuracy_valids, error_train, error_valids = \
-                 als(train_data, val_data, k=388, lr=lr, num_iteration=num_iterations)
+                 als(train_data, val_data, k=best_k, lr=lr, num_iteration=num_iterations)
 
+    """Plotting average squared error"""
     # num_samples_val = len(val_data['user_id'])
     # num_samples_train = len(train_data['user_id'])
     #
@@ -207,10 +204,24 @@ def main():
     #
     # plt.show()
 
+    """Plotting squared error"""
+    # num_samples_val = len(val_data['user_id'])
+    # num_samples_train = len(train_data['user_id'])
+    #
+    # plt.plot(range(0, num_iterations, 10000), error_train)
+    # plt.plot(range(0, num_iterations, 10000), error_valids)
+    #
+    # plt.ylabel('Error')
+    # plt.xlabel('Iteration')
+    #
+    # plt.legend(['Training error', 'Validation error'])
+    #
+    # plt.title('Average Squared Error vs Iteration \n K = {}, lr = {}, num_iterations = {}'.format(best_k, lr, num_iterations))
+    #
+    # plt.show()
+
     print("Test Accuracy: {}".format(sparse_matrix_evaluate(test_data, mat)))
     print("Valid Accuracy: {}".format(sparse_matrix_evaluate(val_data, mat)))
-
-
 
 
     #####################################################################
