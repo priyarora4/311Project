@@ -4,13 +4,14 @@ from utils import *
 from scipy.linalg import sqrtm
 
 import numpy as np
-from part_a.item_response import *
+from part_b.item_response import *
 
 from sklearn.impute import KNNImputer
 from utils import *
 import matplotlib.pyplot as plt
 from part_a.matrix_factorization import *
 
+g=0.25
 
 def bootstrap_data(data, size):
     data_bootstrap = {'user_id': [], "question_id": [], "is_correct": []}
@@ -29,22 +30,44 @@ def bootstrap_data(data, size):
 
 
     return data_bootstrap
+def load_Q(num_questions):
+    num_categories = 388
+    path = "../data/question_meta.csv"
+    Q = np.zeros((num_questions, num_categories))
+
+    with open(path, "r") as csv_file:
+        reader = csv.reader(csv_file)
+        for row in reader:
+            try:
+                question_id = int(row[0])
+                subjects = row[1]
+                subjects = ast.literal_eval(subjects)
+                for subject in subjects:
+                    Q[question_id][int(subject)] = 1
+            except ValueError:
+                pass
+
+    return Q
 
 def run_irt(train_data, val_data):
     best_lr = 0.01
-    best_iterations = 13
+    best_iterations = 16
 
     size = len(train_data['user_id'])
     train_data_bootstrap = bootstrap_data(train_data, size)
+    num_questions = len(set(train_data['question_id']))
 
-    theta, beta, val_acc_lst, neg_lld_list_train, neg_lld_list_valid = irt(
-        train_data_bootstrap, val_data, best_lr, best_iterations)
+    Q = load_Q(num_questions)
 
-    mat = np.zeros((len(theta), len(beta)))
 
-    for i in range(len(theta)):
+    U, beta, a, val_acc_lst, neg_lld_list_train, neg_lld_list_valid = irt(
+        train_data_bootstrap, val_data, best_lr, best_iterations, Q)
+
+    mat = np.zeros((len(U), len(beta)))
+
+    for i in range(len(U)):
         for j in range(len(beta)):
-            mat[i][j] = np.exp(theta[i] - beta[j]) / (1 + np.exp(theta[i] - beta[j]))
+            mat[i][j] = 0.25 + (1-0.25)*sigmoid(a[j]*(U[i].T@Q[j] - beta[j]))
 
     return mat
 
@@ -80,19 +103,22 @@ def main():
     val_data = load_valid_csv("../data")
     test_data = load_public_test_csv("../data")
 
+    num_users = len(set(train_data['user_id']))
+    num_questions = len(set(train_data['question_id']))
 
-    mat_irt = run_irt(train_data, val_data)
-    mat_knn = run_knn(train_data, val_data, k=11)
-    mat_fact = run_fact(train_data, val_data, k=82)
-    mat_fact2 = run_fact(train_data, val_data, k=388)
 
-    irt_accuracy_train = sparse_matrix_evaluate(train_data, mat_irt)
-    fact2_accuracy_train = sparse_matrix_evaluate(train_data, mat_fact2)
-    fact_accuracy_train = sparse_matrix_evaluate(train_data, mat_fact)
+    # mat_irt = run_irt(train_data, val_data)
+    # mat_knn = run_knn(train_data, val_data, k=11)
+    # mat_fact = run_fact(train_data, val_data, k=82)
+    # mat_fact2 = run_fact(train_data, val_data, k=388)
 
-    irt_accuracy_valid = sparse_matrix_evaluate(val_data, mat_irt)
-    fact2_accuracy_valid = sparse_matrix_evaluate(val_data, mat_fact2)
-    fact_accuracy_valid = sparse_matrix_evaluate(val_data, mat_fact)
+    # irt_accuracy_train = sparse_matrix_evaluate(train_data, mat_irt)
+    # fact2_accuracy_train = sparse_matrix_evaluate(train_data, mat_fact2)
+    # fact_accuracy_train = sparse_matrix_evaluate(train_data, mat_fact)
+    #
+    # irt_accuracy_valid = sparse_matrix_evaluate(val_data, mat_irt)
+    # fact2_accuracy_valid = sparse_matrix_evaluate(val_data, mat_fact2)
+    # fact_accuracy_valid = sparse_matrix_evaluate(val_data, mat_fact)
 
     # print("Irt train accuracy {}".format(irt_accuracy_train))
     # print("Irt valid accuracy {}".format(irt_accuracy_valid))
@@ -106,8 +132,15 @@ def main():
     # print("Fact valid accuracy {}".format(fact_accuracy_valid))
     # print('\n')
 
+    num_mats = 1
+    ensemble = np.zeros((num_users, num_questions))
+    for i in range(num_mats):
+        mat = run_irt(train_data, val_data)
+        ensemble += mat
+    ensemble = ensemble / num_mats
 
-    ensemble = (mat_irt + mat_fact2 + mat_knn) / 3
+
+    # ensemble = (mat_irt + mat_fact2 + mat_knn) / 3
 
     train_accuracy = sparse_matrix_evaluate(train_data, ensemble)
     valid_accuracy = sparse_matrix_evaluate(val_data, ensemble)

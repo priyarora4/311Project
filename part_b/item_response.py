@@ -224,13 +224,23 @@ def main():
     sparse_matrix = load_train_sparse("../data")
     val_data = load_valid_csv("../data")
     test_data = load_public_test_csv("../data")
+    private_test = load_private_test_csv('../data')
+
+
+    train_data['question_id'] += val_data['question_id']
+    train_data['user_id'] += val_data['user_id']
+    train_data['is_correct'] += val_data['is_correct']
+
+    train_data['question_id'] += test_data['question_id']
+    train_data['user_id'] += test_data['user_id']
+    train_data['is_correct'] += test_data['is_correct']
+
+
+
 
     num_questions = len(set(train_data['question_id']))
     Q = load_Q(num_questions)
 
-    # train_data['question_id'] += val_data['question_id']
-    # train_data['user_id'] += val_data['user_id']
-    # train_data['is_correct'] += val_data['is_correct']
 
 
     #####################################################################
@@ -275,6 +285,16 @@ def main():
     #
     U, beta, a, val_acc_lst, neg_lld_list_train, neg_lld_list_valid = irt(
         train_data, val_data, best_lr, best_iterations, Q)
+
+
+    mat = np.zeros((len(U), len(beta)))
+    for i in range(len(U)):
+        for j in range(len(beta)):
+            mat[i][j] = g + (1-g)*sigmoid(a[j]*(U[i].T@Q[j] - beta[j]))
+
+    predictions = sparse_matrix_predictions(private_test, mat)
+    private_test['is_correct'] = predictions
+    save_private_test_csv(private_test)
 
     score = evaluate(test_data, U, beta, a, Q)
     score_valid = evaluate(val_data, U, beta, a, Q)
