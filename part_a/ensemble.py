@@ -2,17 +2,23 @@
 
 from utils import *
 from scipy.linalg import sqrtm
-
 import numpy as np
 from part_a.item_response import *
-
 from sklearn.impute import KNNImputer
 from utils import *
-import matplotlib.pyplot as plt
 from part_a.matrix_factorization import *
 
 
+
 def bootstrap_data(data, size):
+    """ Bootstrap data. Bag the data and return a bootstrapped data set
+
+        :param data: A dictionary {user_id: list, question_id: list,
+        is_correct: list}
+        :param size: int
+        :return: A dictionary {user_id: list, question_id: list,
+        is_correct: list}
+        """
     data_bootstrap = {'user_id': [], "question_id": [], "is_correct": []}
 
     for num in range(size):
@@ -27,10 +33,17 @@ def bootstrap_data(data, size):
         data_bootstrap['question_id'].append(q)
         data_bootstrap['is_correct'].append(c)
 
-
     return data_bootstrap
 
 def run_irt(train_data, val_data):
+    """Create matrix prediction using IRT trained on train data
+
+    :param train_data: A dictionary {user_id: list, question_id: list,
+        is_correct: list}
+    :param val_data: A dictionary {user_id: list, question_id: list,
+        is_correct: list}
+    :return: num_users by num_questions matrix of predictions
+    """
     best_lr = 0.01
     best_iterations = 13
 
@@ -50,6 +63,16 @@ def run_irt(train_data, val_data):
 
 
 def run_knn(train_data, val_data, k):
+    """Create matrix prediction using KNN trained on train data. k is k nearest neighbors
+
+    :param train_data: A dictionary {user_id: list, question_id: list,
+        is_correct: list}
+    :param val_data: A dictionary {user_id: list, question_id: list,
+        is_correct: list}
+    :param k: int
+    :return: num_users by num_questions matrix of predictions
+    """
+
     sparse_matrix = load_train_sparse("../data").toarray()
     size = len(train_data['user_id'])
     train_data_bootstrap = bootstrap_data(train_data, size)
@@ -62,14 +85,24 @@ def run_knn(train_data, val_data, k):
 
 
 def run_fact(train_data, val_data, k):
+    """Create matrix prediction using Matrix factorization trained on train data.
+        k is dimension of subspace
+
+    :param train_data: A dictionary {user_id: list, question_id: list,
+        is_correct: list}
+    :param val_data: A dictionary {user_id: list, question_id: list,
+        is_correct: list}
+    :param k: int
+    :return: num_users by num_questions matrix of predictions
+    """
     size = len(train_data['user_id'])
     train_data_bootstrap = bootstrap_data(train_data, size)
-
 
     mat, accuracy_train, accuracy_valids, error_train, error_valids = \
         als(train_data_bootstrap, val_data, k=k, lr=0.01, num_iteration=500000)
 
     return mat
+
 
 def main():
 
@@ -80,44 +113,19 @@ def main():
     val_data = load_valid_csv("../data")
     test_data = load_public_test_csv("../data")
 
-
+    #produce prediction matrices
     mat_irt = run_irt(train_data, val_data)
-    mat_knn = run_knn(train_data, val_data, k=11)
-    mat_fact = run_fact(train_data, val_data, k=82)
+    mat_fact1 = run_fact(train_data, val_data, k=82)
     mat_fact2 = run_fact(train_data, val_data, k=388)
 
-    irt_accuracy_train = sparse_matrix_evaluate(train_data, mat_irt)
-    fact2_accuracy_train = sparse_matrix_evaluate(train_data, mat_fact2)
-    fact_accuracy_train = sparse_matrix_evaluate(train_data, mat_fact)
-
-    irt_accuracy_valid = sparse_matrix_evaluate(val_data, mat_irt)
-    fact2_accuracy_valid = sparse_matrix_evaluate(val_data, mat_fact2)
-    fact_accuracy_valid = sparse_matrix_evaluate(val_data, mat_fact)
-
-    # print("Irt train accuracy {}".format(irt_accuracy_train))
-    # print("Irt valid accuracy {}".format(irt_accuracy_valid))
-    # print('\n')
-    #
-    # print("MatFact2 train accuracy {}".format(fact2_accuracy_train))
-    # print("MatFact2 valid accuracy {}".format(fact2_accuracy_valid))
-    # print('\n')
-    #
-    # print("Fact train accuracy {}".format(fact_accuracy_train))
-    # print("Fact valid accuracy {}".format(fact_accuracy_valid))
-    # print('\n')
-
-
-    ensemble = (mat_irt + mat_fact2 + mat_knn) / 3
+    #ensemble
+    ensemble = (mat_irt + mat_fact1 + mat_fact2) / 3
 
     train_accuracy = sparse_matrix_evaluate(train_data, ensemble)
     valid_accuracy = sparse_matrix_evaluate(val_data, ensemble)
 
     print("train_accuracy {} \n valid accuracy {}".format(train_accuracy, valid_accuracy))
     print("test_accuracy {}".format(sparse_matrix_evaluate(test_data, ensemble)))
-
-    #run Matrix factorization
-
-
 
     return 0
 
