@@ -197,10 +197,10 @@ def evaluate(data, theta, beta, a):
     for i, q in enumerate(data["question_id"]):
         u = data["user_id"][i]
         x = (a[q]*(theta[u] - beta[q])).sum()
-        p_a = sigmoid(x)
+        p_a = g + (1-g)*sigmoid(x)
         pred.append(p_a >= 0.5)
-        if data["is_correct"][i] != int(p_a >= 0.5):
-            wrongs.append({'user_id': u, 'question_id': q, 'is_correct': data["is_correct"][i], 'Pred': p_a})
+        # if data["is_correct"][i] != int(p_a >= 0.5):
+        #     wrongs.append({'user_id': u, 'question_id': q, 'is_correct': data["is_correct"][i], 'Pred': p_a})
 
     return np.sum((data["is_correct"] == np.array(pred))) \
            / len(data["is_correct"])
@@ -218,47 +218,50 @@ def main():
     # Tune learning rate and number of iterations. With the implemented #
     # code, report the validation and test accuracy.                    #
     #####################################################################
-    lr = 0.01
-    iterations = 100
-    learning_rates = [0.01, 0.05]
-    for lr in learning_rates:
-        best_accuracies_per_lr = []
-
-        theta, beta, a, val_acc_lst, neg_lld_list_train, neg_lld_list_valid = irt(train_data, val_data, lr, iterations)
-
-        max_accuracy = max(val_acc_lst)
-
-        print("Current Learning Rate: {}".format(lr))
-        print("Best Validation Accuracy: {}".format(max_accuracy))
-        print("At iteration: {}".format(val_acc_lst.index(max_accuracy)))
-        print('\n\n')
-
-        # plt.plot(range(1, iterations + 1), neg_lld_list_train)
-        # plt.plot(range(1, iterations + 1), neg_lld_list_valid)
-        # plt.xlabel("iteration")
-        # plt.ylabel("NLLK")
-
-        # plt.legend(['Train', 'Validation'])
-
-        # plt.show()
-
-        best_accuracies_per_lr.append(max_accuracy)
+    # lr = 0.01
+    # iterations = 100
+    # learning_rates = [0.01, 0.05]
+    # for lr in learning_rates:
+    #     best_accuracies_per_lr = []
+    #
+    #     theta, beta, a, val_acc_lst, neg_lld_list_train, neg_lld_list_valid = irt(train_data, val_data, lr, iterations)
+    #
+    #     max_accuracy = max(val_acc_lst)
+    #
+    #     print("Current Learning Rate: {}".format(lr))
+    #     print("Best Validation Accuracy: {}".format(max_accuracy))
+    #     print("At iteration: {}".format(val_acc_lst.index(max_accuracy)))
+    #     print('\n\n')
+    #
+    #     # plt.plot(range(1, iterations + 1), neg_lld_list_train)
+    #     # plt.plot(range(1, iterations + 1), neg_lld_list_valid)
+    #     # plt.xlabel("iteration")
+    #     # plt.ylabel("NLLK")
+    #
+    #     # plt.legend(['Train', 'Validation'])
+    #
+    #     # plt.show()
+    #
+    #     best_accuracies_per_lr.append(max_accuracy)
 
 
     best_lr = 0.01
-    best_iterations = 14
+    best_iterations = 17
     #
     #
-    #
+    # #
     theta, beta, a, val_acc_lst, neg_lld_list_train, neg_lld_list_valid = irt(
         train_data, val_data, best_lr, best_iterations)
 
     score = evaluate(test_data, theta, beta, a)
+    score_train = evaluate(train_data, theta, beta, a)
     score_valid = evaluate(val_data, theta, beta, a)
     #
     #
     print("Test accuracy for lambda={} iterations={} :  {}".format(best_lr, best_iterations, score))
-
+    print("Train accuracy for lambda={} iterations={} :  {}".format(best_lr,
+                                                                   best_iterations,
+                                                                   score_train))
     print("Validation accuracy for lambda={} iterations={} :  {}".format(best_lr, best_iterations, score_valid))
 
 
@@ -291,7 +294,7 @@ def main():
     #####################################################################
     #TODO REPORT TEST ACCURACIES
 
-    # theta, beta, val_acc_lst, neg_lld_list_train, neg_lld_list_valid = irt(
+    # theta, beta, a, val_acc_lst, neg_lld_list_train, neg_lld_list_valid = irt(
     #     train_data, val_data, best_lr, best_iterations)
     #
     # five_questions = []
@@ -300,16 +303,31 @@ def main():
     #     if train_data['question_id'][index] not in five_questions:
     #         five_questions.append(train_data['question_id'][index])
     #     index+=1
-    #
-    #
-    # for question_id in five_questions:
-    #     probs = []
+
+
+    # for question_id in five_questions[-1:]:
+    #     probs1 = []
+    #     probs2 = []
+    #     probs3 = []
     #     for i in range(len(theta)):
-    #         probs.append(sigmoid(theta[i] - beta[question_id]))
+    #         x = (a[question_id] * (theta[i] - beta[question_id])).sum()
+    #         p_a = 0 + (1 - 0) * sigmoid(x)
+    #         probs1.append(p_a)
     #
-    #     plt.plot(theta, probs, 'r.')
+    #         x = (a[question_id] * (theta[i] - beta[question_id])).sum()
+    #         p_a = 0.25 + (1 - 0.25) * sigmoid(x)
+    #         probs2.append(p_a)
+    #
+    #         x = (a[question_id] * (theta[i] - beta[question_id])).sum()
+    #         p_a = 0.75 + (1 - 0.75) * sigmoid(x)
+    #         probs3.append(p_a)
+    #
+    #     plt.plot(theta, probs1, '.')
+    #     plt.plot(theta, probs2, '.')
+    #     plt.plot(theta, probs3, '.')
+    #     plt.legend(['g = 0', 'g = 0.25', 'g = 0.75'])
     #     plt.xlabel('Theta')
-    #     plt.ylabel('Probability correct')
+    #     plt.ylabel('Probability Correct')
     #     plt.title("IRT Probability Correct vs Theta, Question Id: {}".format(question_id))
     #     plt.show()
 
