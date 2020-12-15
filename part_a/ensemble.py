@@ -118,6 +118,25 @@ def main():
     mat_fact1 = run_fact(train_data, val_data, k=82)
     mat_fact2 = run_fact(train_data, val_data, k=388)
 
+    #individual performance
+    irt_accuracy_train = sparse_matrix_evaluate(train_data, mat_irt)
+    fact1_accuracy_train = sparse_matrix_evaluate(train_data, mat_fact1)
+    fact2_accuracy_train = sparse_matrix_evaluate(train_data, mat_fact2)
+
+    irt_accuracy_valid = sparse_matrix_evaluate(val_data, mat_irt)
+    fact1_accuracy_valid = sparse_matrix_evaluate(val_data, mat_fact1)
+    fact2_accuracy_valid = sparse_matrix_evaluate(val_data, mat_fact2)
+
+    print("Train Accuracy IRT: {}".format(irt_accuracy_train))
+    print("Train Accuracy Fact82: {}".format(fact1_accuracy_train))
+    print("Train Accuracy Fact388: {}".format(fact2_accuracy_train))
+    print('\n')
+    print("Valid Accuracy IRT: {}".format(irt_accuracy_valid))
+    print("Valid Accuracy Fact82: {}".format(fact1_accuracy_valid))
+    print("Valid Accuracy Fact388: {}".format(fact2_accuracy_valid))
+    print('\n\n')
+
+
     #ensemble
     ensemble = (mat_irt + mat_fact1 + mat_fact2) / 3
 
