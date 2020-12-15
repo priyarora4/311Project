@@ -262,26 +262,26 @@ def main():
     best_iterations = 16
     U, beta, a, val_acc_lst, neg_lld_list_train, neg_lld_list_valid = irt(
         train_data, val_data, best_lr, best_iterations, Q)
-
-    mat = np.zeros((len(U), len(beta)))
-    for i in range(len(U)):
-        for j in range(len(beta)):
-            mat[i][j] = g + (1-g)*sigmoid(a[j]*(U[i].T@Q[j] - beta[j]))
-
-    predictions = sparse_matrix_predictions(private_test, mat)
-    private_test['is_correct'] = predictions
-    save_private_test_csv(private_test)
-
-    score = evaluate(test_data, U, beta, a, Q)
-    score_valid = evaluate(val_data, U, beta, a, Q)
-    score_train = evaluate(train_data, U, beta, a, Q)
-
-    # PRINT ACCURACIES
-    print("Test accuracy for lambda={} iterations={} :  {}".format(best_lr, best_iterations, score))
-
-    print("Validation accuracy for lambda={} iterations={} :  {}".format(best_lr, best_iterations, score_valid))
-
-    print("train accuracy for lambda={} iterations={} :  {}".format(best_lr, best_iterations, score_train))
+    #
+    # mat = np.zeros((len(U), len(beta)))
+    # for i in range(len(U)):
+    #     for j in range(len(beta)):
+    #         mat[i][j] = g + (1-g)*sigmoid(a[j]*(U[i].T@Q[j] - beta[j]))
+    #
+    # predictions = sparse_matrix_predictions(private_test, mat)
+    # private_test['is_correct'] = predictions
+    # save_private_test_csv(private_test)
+    #
+    # score = evaluate(test_data, U, beta, a, Q)
+    # score_valid = evaluate(val_data, U, beta, a, Q)
+    # score_train = evaluate(train_data, U, beta, a, Q)
+    #
+    # # PRINT ACCURACIES
+    # print("Test accuracy for lambda={} iterations={} :  {}".format(best_lr, best_iterations, score))
+    #
+    # print("Validation accuracy for lambda={} iterations={} :  {}".format(best_lr, best_iterations, score_valid))
+    #
+    # print("train accuracy for lambda={} iterations={} :  {}".format(best_lr, best_iterations, score_train))
 
     #####################################################################
     # Plotting effects of a and g
@@ -294,17 +294,17 @@ def main():
     # probs3 = []
     # theta = U @ Q[question]
     # for i in range(len(theta)):
-    #     probs1.append(g + sigmoid((1-g)*1*(theta[i] - beta[question])))
-    #     probs1.append(g + sigmoid((1-g)*0.5*(theta[i] - beta[question])))
-    #     probs1.append(g + sigmoid((1-g)*2*(theta[i] - beta[question])))
+    #     probs1.append(g + (1 - g) * sigmoid(0.5 * (theta[i] - beta[question])))
+    #     probs2.append(g + (1 - g) * sigmoid(1 * (theta[i] - beta[question])))
+    #     probs3.append(g + (1 - g) * sigmoid(2 * (theta[i] - beta[question])))
     #
     # plt.plot(theta, probs1, '.')
     # plt.plot(theta, probs2, '.')
     # plt.plot(theta, probs3, '.')
-    # plt.legend(['1', '0.5', '2'])
-    # plt.xlabel('U[i]@Q[j]')
-    # plt.ylabel('Probability correct')
-    # plt.title("IRT Probability Correct vs U[i]@Q[j], Question Id: {}".format(question))
+    # plt.legend(['a = 0.5', 'a = 1', 'a = 2'])
+    # plt.xlabel('$U_i^TQ_j$')
+    # plt.ylabel('Probability Correct')
+    # plt.title("IRT Probability Correct vs $U_i^TQ_j$, Question Id: {}".format(question))
     # plt.show()
 
 
