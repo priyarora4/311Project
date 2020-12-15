@@ -4,7 +4,7 @@ from utils import *
 from scipy.linalg import sqrtm
 
 import numpy as np
-from part_b.item_response import *
+from part_b.item_responseB import *
 
 from sklearn.impute import KNNImputer
 from utils import *
