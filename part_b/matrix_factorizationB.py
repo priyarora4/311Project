@@ -164,7 +164,7 @@ def als(train_data, val_data, k, lr, num_iteration, reg):
             mat = sigmoid(u @ z.T)
             accuracy_valids.append(sparse_matrix_evaluate(val_data, mat))
             accuracy_trains.append(sparse_matrix_evaluate(train_data, mat))
-            # print(i)
+            print(i)
 
     mat = sigmoid(u @ z.T)
     #####################################################################
@@ -216,20 +216,20 @@ def main():
     # for reg in [0.0005, 0.001, 0.0025, 0.005]:
     #     for k in [2, 10, 50, 100, 150, 200, 300]:
 
-    for reg in [0.001]:
+    for lr in [0.001, 0.005, 0.01, 0.5]:
 
         mat, accuracy_trains, accuracy_valids, error_train, error_valids = \
-            als(train_data, val_data, k=best_k, lr=best_lr, num_iteration=num_iterations, reg=reg)
+            als(train_data, val_data, k=best_k, lr=lr, num_iteration=num_iterations, reg=0)
 
         # accuracy_train = sparse_matrix_evaluate(train_data, mat)
         # accuracy_valid = sparse_matrix_evaluate(val_data, mat)
         print("K = {}".format(best_k))
         print("lr = {}".format(best_lr))
-        print("reg = {}".format(reg))
+        print("reg = {}".format(0))
         print("Training accuracy: {}".format(max(accuracy_trains)))
         print("Validation accuracy: {}".format(max(accuracy_valids)))
-        best_iteration = (accuracy_valids.index(max(accuracy_valids))) * 10000
-        print("At iteration {}".format(best_iteration))
+        best_iteration = (accuracy_trains.index(max(accuracy_trains))) * 10000
+        print("highest overfit At iteration {}".format(best_iteration))
         print('\n\n')
 
         # plt.title("error vs iteration \n lr={}, k={} reg={}".format(lr, best_k, reg))

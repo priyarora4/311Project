@@ -67,7 +67,7 @@ def run_fact(train_data, val_data, k):
 
 
     mat, accuracy_train, accuracy_valids, error_train, error_valids = \
-        als(train_data_bootstrap, val_data, k=k, lr=0.05, num_iteration=500000, reg=0.001)
+        als(train_data_bootstrap, val_data, k=k, lr=0.05, num_iteration=500000, reg=0)
 
     return mat
 
@@ -83,16 +83,26 @@ def main():
 
     # mat_irt = run_irt(train_data, val_data)
     # mat_knn = run_knn(train_data, val_data, k=11)
-    mat_fact1 = run_fact(train_data, val_data, k=388)
-    mat_fact2 = run_fact(train_data, val_data, k=388)
-    mat_fact3 = run_fact(train_data, val_data, k=388)
-    mat_fact4 = run_fact(train_data, val_data, k=388)
-    mat_fact5 = run_fact(train_data, val_data, k=388)
-    mat_fact6 = run_fact(train_data, val_data, k=388)
-    mat_fact7 = run_fact(train_data, val_data, k=388)
-    mat_fact8 = run_fact(train_data, val_data, k=388)
-    mat_fact9 = run_fact(train_data, val_data, k=388)
-    # irt_accuracy_train = sparse_matrix_evaluate(train_data, mat_irt)
+    num_users = len(set(train_data['user_id']))
+    num_questions = len(set(train_data['question_id']))
+
+
+    ensemble = np.zeros((num_users, num_questions))
+    num_mats = 15
+    for i in range(num_mats):
+        mat_fact = run_fact(train_data, val_data, k=100)
+        while mat_fact.shape[0] != num_users or mat_fact.shape[1] != num_questions:
+            print("RERUNNNNN________________________________________________")
+            mat_fact = run_fact(train_data, val_data, k=100)
+        print("Iteration num {}".format(i))
+        ensemble += mat_fact
+    ensemble = ensemble / num_mats
+
+    accuracy_train = sparse_matrix_evaluate(train_data, ensemble)
+    accuracy_valid = sparse_matrix_evaluate(val_data, ensemble)
+    print("Training accuracy = {}".format(accuracy_train))
+    print("Valid accuracy = {}".format(accuracy_valid))
+
     # fact2_accuracy_train = sparse_matrix_evaluate(train_data, mat_fact2)
     # fact_accuracy_train = sparse_matrix_evaluate(train_data, mat_fact)
     #
@@ -113,15 +123,15 @@ def main():
     # print('\n')
 
 
-    ensemble = (mat_fact1 + mat_fact2 + mat_fact3 + mat_fact4 + mat_fact5 + mat_fact6 + mat_fact7+ mat_fact8 + mat_fact9) / 9
-
-    train_accuracy = sparse_matrix_evaluate(train_data, ensemble)
-    valid_accuracy = sparse_matrix_evaluate(val_data, ensemble)
-
-    print("train_accuracy {} \n valid accuracy {}".format(train_accuracy, valid_accuracy))
-    print("test_accuracy {}".format(sparse_matrix_evaluate(test_data, ensemble)))
-
-    #run Matrix factorization
+    # ensemble = (mat_fact1 + mat_fact2 + mat_fact3 + mat_fact4 + mat_fact5 + mat_fact6 + mat_fact7+ mat_fact8 + mat_fact9) / 9
+    #
+    # train_accuracy = sparse_matrix_evaluate(train_data, ensemble)
+    # valid_accuracy = sparse_matrix_evaluate(val_data, ensemble)
+    #
+    # print("train_accuracy {} \n valid accuracy {}".format(train_accuracy, valid_accuracy))
+    # print("test_accuracy {}".format(sparse_matrix_evaluate(test_data, ensemble)))
+    #
+    # #run Matrix factorization
 
 
 

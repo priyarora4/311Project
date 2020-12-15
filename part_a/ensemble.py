@@ -67,7 +67,7 @@ def run_fact(train_data, val_data, k):
 
 
     mat, accuracy_train, accuracy_valids, error_train, error_valids = \
-        als(train_data_bootstrap, val_data, k=k, lr=0.01, num_iteration=500000)
+        als(train_data_bootstrap, val_data, k=k, lr=0.05, num_iteration=490000)
 
     return mat
 
@@ -81,18 +81,19 @@ def main():
     test_data = load_public_test_csv("../data")
 
 
-    mat_irt = run_irt(train_data, val_data)
-    mat_knn = run_knn(train_data, val_data, k=11)
-    mat_fact = run_fact(train_data, val_data, k=82)
-    mat_fact2 = run_fact(train_data, val_data, k=388)
+    # mat_irt = run_irt(train_data, val_data)
+    # mat_knn = run_knn(train_data, val_data, k=11)
+    # mat_fact = run_fact(train_data, val_data, k=82)
+    # mat_fact2 = run_fact(train_data, val_data, k=388)
+    #
+    # irt_accuracy_train = sparse_matrix_evaluate(train_data, mat_irt)
+    # fact2_accuracy_train = sparse_matrix_evaluate(train_data, mat_fact2)
+    # fact_accuracy_train = sparse_matrix_evaluate(train_data, mat_fact)
+    #
+    # irt_accuracy_valid = sparse_matrix_evaluate(val_data, mat_irt)
+    # fact2_accuracy_valid = sparse_matrix_evaluate(val_data, mat_fact2)
+    # fact_accuracy_valid = sparse_matrix_evaluate(val_data, mat_fact)
 
-    irt_accuracy_train = sparse_matrix_evaluate(train_data, mat_irt)
-    fact2_accuracy_train = sparse_matrix_evaluate(train_data, mat_fact2)
-    fact_accuracy_train = sparse_matrix_evaluate(train_data, mat_fact)
-
-    irt_accuracy_valid = sparse_matrix_evaluate(val_data, mat_irt)
-    fact2_accuracy_valid = sparse_matrix_evaluate(val_data, mat_fact2)
-    fact_accuracy_valid = sparse_matrix_evaluate(val_data, mat_fact)
 
     # print("Irt train accuracy {}".format(irt_accuracy_train))
     # print("Irt valid accuracy {}".format(irt_accuracy_valid))
