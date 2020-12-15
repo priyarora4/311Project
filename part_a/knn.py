@@ -20,7 +20,7 @@ def knn_impute_by_user(matrix, valid_data, k):
     # We use NaN-Euclidean distance measure.
     mat = nbrs.fit_transform(matrix)
     acc = sparse_matrix_evaluate(valid_data, mat)
-    print("Validation Accuracy: {}".format(acc))
+    print("user | k: {} Validation Accuracy: {}".format(k, acc))
     return acc
 
 
@@ -38,7 +38,7 @@ def knn_impute_by_item(matrix, valid_data, k):
     # We use NaN-Euclidean distance measure.
     mat = nbrs.fit_transform(matrix.T)
     acc = sparse_matrix_evaluate(valid_data, mat.T)
-    print("Validation Accuracy: {}".format(acc))
+    print("item | k: {} Validation Accuracy: {}".format(k, acc))
     return acc
 
 
@@ -52,24 +52,36 @@ def main():
     print("Shape of sparse matrix:")
     print(sparse_matrix.shape)
 
-    all_valid_acc = []
-    for k in range(1, 27, 5):
-        valid_acc = knn_impute_by_user(sparse_matrix, val_data, k)
-        all_valid_acc.append(valid_acc)
+    user_acc = []
+    question_acc = []
+    k_range = range(1, 27, 5)
+    for k in k_range:
+        user_acc.append(knn_impute_by_user(sparse_matrix, val_data, k))
+        question_acc.append(knn_impute_by_item(sparse_matrix, val_data, k))
 
-    plt.plot(range(1, 27, 5), all_valid_acc)
-    plt.xlabel("k")
-    plt.ylabel("accuracy")
+    # Plot With User Based Filtering
+    max_k = k_range[int(np.argmax(user_acc))]
+    plt.plot(k_range, user_acc)
+    plt.xlabel("Values of K")
+    plt.ylabel("Validation Accuracy")
+    plt.xticks(k_range)
+    plt.title("User Based Filtering: kNN Validation Accuracy vs K Values")
+    plt.savefig('../plots/CSC311Final1auser.png')
+    plt.show()
+    test_acc = knn_impute_by_user(sparse_matrix, test_data, max_k)
+    print("user: k = {} | test accuracy: {}".format(max_k, test_acc))
 
-    plt.savefig('../plots/A1a_by_user.png')
-
-    print('Validation accuracies: ' + str(all_valid_acc))
-    best_k_index = all_valid_acc.index(max(all_valid_acc))
-    best_k = range(1, 27, 5)[best_k_index]
-    print("best k = " + str(best_k))
-
-    test_acc = knn_impute_by_user(sparse_matrix, test_data, best_k)
-    print("Test acc = " + str(test_acc))
+    # Plot With Item Based Filtering
+    max_k = k_range[int(np.argmax(question_acc))]
+    plt.plot(k_range, question_acc)
+    plt.xlabel("Values of K")
+    plt.ylabel("Validation Accuracy")
+    plt.xticks(k_range)
+    plt.title("Item Based Filtering: kNN Validation Accuracy vs K Values")
+    plt.savefig('../plots/CSC311Final1aitem.png')
+    plt.show()
+    test_acc = knn_impute_by_item(sparse_matrix, test_data, max_k)
+    print("item: k = {} | test accuracy: {}".format(max_k, test_acc))
 
 
 if __name__ == "__main__":
