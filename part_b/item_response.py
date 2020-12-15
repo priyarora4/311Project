@@ -189,13 +189,14 @@ def evaluate(data, U, beta, a, Q):
         u_u = U[u].reshape((388,1))
         q_q = Q[q].reshape((388,1))
         x = a[q]*(u_u.T @ q_q - beta[q])
-        p_a = sigmoid(x)
+        p_a = g + (1-g)*sigmoid(x)
         pred.append(p_a[0][0] >= 0.5)
-        if data["is_correct"][i] != (p_a[0][0] >= 0.5):
-            wrongs.append((data["is_correct"][i], p_a[0][0]))
+        # if data["is_correct"][i] != (p_a[0][0] >= 0.5):
+        #     wrongs.append((data["is_correct"][i], p_a[0][0]))
 
     return np.sum((data["is_correct"] == np.array(pred))) \
            / len(data["is_correct"])
+
 
 def load_Q(num_questions):
     num_categories = 388
@@ -215,6 +216,7 @@ def load_Q(num_questions):
                 pass
 
     return Q
+
 
 def main():
     train_data = load_train_csv("../data")
@@ -236,23 +238,23 @@ def main():
     # Tune learning rate and number of iterations. With the implemented #
     # code, report the validation and test accuracy.                    #
     #####################################################################
-    lr = 0.01
-    iterations = 100
-    learning_rates = [0.001, 0.005, 0.01, 0.05]
-    for lr in learning_rates:
-        if lr == 0.01 or lr == 0.05:
-            iterations = 50
-        best_accuracies_per_lr = []
-
-        U, beta, a, val_acc_lst, neg_lld_list_train, neg_lld_list_valid = irt(train_data, val_data, lr, iterations, Q)
-
-        max_accuracy = max(val_acc_lst)
-
-        print("Current Learning Rate: {}".format(lr))
-        print("Best Validation Accuracy: {}".format(max_accuracy))
-        print("At iteration: {}".format(val_acc_lst.index(max_accuracy)))
-        print("Training Accuracy {}".format(evaluate(train_data, U, beta, a, Q)))
-        print('\n\n')
+    # lr = 0.01
+    # iterations = 100
+    # learning_rates = [0.001, 0.005, 0.01, 0.05]
+    # for lr in learning_rates:
+    #     if lr == 0.01 or lr == 0.05:
+    #         iterations = 50
+    #     best_accuracies_per_lr = []
+    #
+    #     U, beta, a, val_acc_lst, neg_lld_list_train, neg_lld_list_valid = irt(train_data, val_data, lr, iterations, Q)
+    #
+    #     max_accuracy = max(val_acc_lst)
+    #
+    #     print("Current Learning Rate: {}".format(lr))
+    #     print("Best Validation Accuracy: {}".format(max_accuracy))
+    #     print("At iteration: {}".format(val_acc_lst.index(max_accuracy)))
+    #     print("Training Accuracy {}".format(evaluate(train_data, U, beta, a, Q)))
+    #     print('\n\n')
 
         # plt.plot(range(1, iterations + 1), neg_lld_list_train)
         # plt.plot(range(1, iterations + 1), neg_lld_list_valid)
@@ -274,23 +276,23 @@ def main():
     U, beta, a, val_acc_lst, neg_lld_list_train, neg_lld_list_valid = irt(
         train_data, val_data, best_lr, best_iterations, Q)
 
-    score, wrongs_test = evaluate(test_data, U, beta, a, Q)
-    score_valid, wrongs_val = evaluate(val_data, U, beta, a, Q)
-    score_train, wrongs_train = evaluate(train_data, U, beta, a, Q)
-
-    wrong1count = 0
-    wrong0count = 0
-    for i in range(len(wrongs_val)):
-        if wrongs_val[i][0] == 1:
-            wrong1count += 1
-
-        elif wrongs_val[i][0] == 0:
-            wrong0count += 1
-    print("Prediction wrong Correct is 1: {}".format(wrong1count))
-    print("Prediction wrong Correct is 0: {}".format(wrong0count))
-    # #
-    # #
-
+    score = evaluate(test_data, U, beta, a, Q)
+    score_valid = evaluate(val_data, U, beta, a, Q)
+    score_train = evaluate(train_data, U, beta, a, Q)
+    #
+    # wrong1count = 0
+    # wrong0count = 0
+    # for i in range(len(wrongs_val)):
+    #     if wrongs_val[i][0] == 1:
+    #         wrong1count += 1
+    #
+    #     elif wrongs_val[i][0] == 0:
+    #         wrong0count += 1
+    # print("Prediction wrong Correct is 1: {}".format(wrong1count))
+    # print("Prediction wrong Correct is 0: {}".format(wrong0count))
+    # # #
+    # # #
+    #
     print("Test accuracy for lambda={} iterations={} :  {}".format(best_lr, best_iterations, score))
 
     print("Validation accuracy for lambda={} iterations={} :  {}".format(best_lr, best_iterations, score_valid))
@@ -326,7 +328,7 @@ def main():
     #####################################################################
     #TODO REPORT TEST ACCURACIES
 
-    # theta, beta, val_acc_lst, neg_lld_list_train, neg_lld_list_valid = irt(
+    # theta, beta, a, val_acc_lst, neg_lld_list_train, neg_lld_list_valid = irt(
     #     train_data, val_data, best_lr, best_iterations)
     #
     # five_questions = []
